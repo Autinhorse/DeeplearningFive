@@ -10,11 +10,10 @@ class BoardFive(QWidget):
     def __init__(self, game, parent=None):
         super().__init__(parent)
         self.game = game
-        self.current_player = 1
         self.grid_size = 40  # 每个格子的大小
         self.margin = 20  # 边距
         self.initUI()
-        self.nextPiece = (-1,-1)
+        self.nextMove = (-1, -1)
 
     def initUI(self):
         self.setWindowTitle('五子棋')
@@ -33,9 +32,11 @@ class BoardFive(QWidget):
                              self.margin + i * self.grid_size+(int)(self.grid_size/2), self.margin + (self.game.size-1) * self.grid_size+(int)(self.grid_size/2))
 
         # 绘制棋子
+        cn = 0
         for y in range(self.game.size):
             for x in range(self.game.size):
-                if self.game.board[y][x] != 0:
+                if self.game.board[y][x] != Player.EMPTY:
+                    cn += 1
                     if self.game.board[y][x] == Player.BLACK:
                         # 黑子
                         color = QColor(Qt.black)
@@ -60,17 +61,19 @@ class BoardFive(QWidget):
 
                         # 绘制带边框的圆形
                         painter.drawEllipse(QPoint(center_x, center_y), 18, 18)
+        # print("Piece Number:",cn)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             pos = event.pos()
             x = round((pos.x() - self.margin-self.grid_size/2) / self.grid_size)
             y = round((pos.y() - self.margin-self.grid_size/2) / self.grid_size)
+            print("Mouse Press:",y,x)
             if 0 <= x < self.game.size and 0 <= y < self.game.size:
-                if self.game.board[y][x] != 0:
+                if self.game.board[y][x] != Player.EMPTY:
                     return
-                print("Click:",y,x,self.current_player)
-                self.nextPiece = (y,x)
+                print("Click:",y,x)
+                self.nextMove = (x, y)
 
                 #self.game.board[y][x] = self.current_player
                 #self.game.DoMove(y=y, x=x, playerColor=self.current_player)
@@ -79,11 +82,11 @@ class BoardFive(QWidget):
                 #self.parent().step_label.setText(f"步数: {self.game.steps}")
                 #self.update()
 
-    def WaitNextPiece(self):
-        self.nextPiece = (-1, -1)
+    def CalculateNextMove(self):
+        self.nextMove = (-2, -2)
 
-    def GetNextPiece(self):
-        return self.nextPiece
+    def GetNextMove(self):
+        return self.nextMove
 
     def SetStepNumber(self, step):
         self.parent().step_label.setText(f"步数: {step}")

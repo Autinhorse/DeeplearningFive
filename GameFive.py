@@ -64,6 +64,20 @@ class GameFive:
                     break
                 self.boardDis[y+j][x+i] = min(self.boardDis[y+j][x+i], max(abs(i),abs(j)))
 
+        # 输出距离信息
+        '''
+        for i in range(self.size):
+            for j in range(self.size):
+                if self.boardDis[i][j]==100:
+                    print(".",end='')
+                elif self.boardDis[i][j]==0:
+                    print("X", end='')
+                elif self.boardDis[i][j]==1:
+                    print("1", end='')
+                elif self.boardDis[i][j] == 2:
+                    print("2", end='')
+            print("")
+        '''
         return False
 
     def GetPieceOnPos(self,y,x):
@@ -104,20 +118,9 @@ class GameFive:
             self.board = data['board']
             print("Board Size:",self.size)
             print("board:",len(self.board))
-            # 修改周围空格信息
-            self.boardDis = [[100 for _ in range(self.size)] for _ in range(self.size)]
-            for y in range(self.size):
-                for x in range(self.size):
-                    if self.board[y][x] != 0:
-                        for i in range(-2, 3):
-                            if x + i < 0 and x + i >= self.size:
-                                continue
-                            for j in range(-2, 3):
-                                if y + j < 0:
-                                    continue
-                                if y + j >= self.size:
-                                    break
-                                self.boardDis[y + j][x + i] = min(self.boardDis[y + j][x + i], max(abs(i), abs(j)))
+
+            self.ResetDisData()
+
         except FileNotFoundError:
             print("Error: The file 'gamedata.json' was not found.")
         except json.JSONDecodeError:
@@ -126,3 +129,21 @@ class GameFive:
             print(f"Error: Missing key {e} in the JSON file.")
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
+
+    def ResetDisData(self):
+        self.steps = 0
+        # 修改周围空格信息
+        self.boardDis = [[100 for _ in range(self.size)] for _ in range(self.size)]
+        for y in range(self.size):
+            for x in range(self.size):
+                if self.board[y][x] != Player.EMPTY:
+                    self.steps += 1
+                    for i in range(-2, 3):
+                        if x + i < 0 and x + i >= self.size:
+                            continue
+                        for j in range(-2, 3):
+                            if y + j < 0:
+                                continue
+                            if y + j >= self.size:
+                                break
+                            self.boardDis[y + j][x + i] = min(self.boardDis[y + j][x + i], max(abs(i), abs(j)))

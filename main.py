@@ -2,16 +2,22 @@ import sys
 import time
 import threading
 import logging
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QApplication
 
 from FiveUI.BoardFive import BoardFive
 from GameFive import GameFive
+from Players.AutoPlayerArena import AutoPlayerArena, MatchResult
+from Players.AutoPlayerArenaPool import AutoPlayerArenaPool
 from Players.PlayerBase import PlayerBase, Player
 from Players.PlayerRandom01 import PlayerRandom01
 from Players.PlayerHuman import PlayerHuman
 
 from enum import Enum, auto
+
+from Players.PlayerRandom02 import PlayerRandom02
+
 
 class GameStatus(Enum):
     IDLE = 0
@@ -21,12 +27,14 @@ class GameStatus(Enum):
 class MainWindow(QWidget):
     def __init__(self, size=15):
         super().__init__()
+        self.thread = None
         self.size = size
         self.steps = 0
         self.status = GameStatus.IDLE
 
         self.player1 = None
         self.player2 = None
+        self.currentPlayer = None
         self.game = GameFive(15)
         self.board = None
 
@@ -35,8 +43,7 @@ class MainWindow(QWidget):
         # 用于控制线程的标志
         self.running = False
 
-        # 启动一个新的线程来执行任务
-        self.thread = threading.Thread(target=self.run_task)
+
 
     def initUI(self):
         self.setWindowTitle('五子棋')
@@ -89,9 +96,15 @@ class MainWindow(QWidget):
         self.show()
 
     def StartGame(self):
+        if self.status!=GameStatus.IDLE:
+            return
+
         # 棋盘部分
-        self.player1 = PlayerRandom01(Player.BLACK)
-        self.player2 = PlayerRandom01(Player.WHITE)
+        # self.player1 = PlayerHuman(Player.BLACK)
+        self.player1 = PlayerRandom02(Player.BLACK)
+        self.player1.rate = 0
+        self.player2 = PlayerRandom02(Player.WHITE)
+        self.player2.rate = 1
         self.game.InitGame(size=15)
         self.player1.game = self.game
         self.player2.game = self.game
@@ -99,8 +112,12 @@ class MainWindow(QWidget):
         self.board.reset_game()
 
         self.status = GameStatus.BLACK
+        self.currentPlayer = self.player1
         self.info_label.setText("黑棋")
+        self.CalculateNextMove()
 
+        # 启动一个新的线程来执行任务
+        self.thread = threading.Thread(target=self.run_task)
         self.running = True
         self.thread.start()
 
@@ -112,40 +129,6 @@ class MainWindow(QWidget):
         self.game.LoadGame()
         self.board.reset_game()
 
-    def DoTest(self):
-        print("Do Test")
-        self.running = False
-        # pos = self.player1.GetPossiblePos()
-        # print("Result:", len(pos))
-        # for (x,y),d in pos:
-        #    print(y,x,d)
-        player = self.player1 if self.status == GameStatus.BLACK else self.player2
-
-        x, y = player.GetNextMove()
-        if x==-1:
-            # 找不到可以走的位置了，GameOver
-            self.info_label.setText("和棋")
-            return
-
-        self.game.steps += 1
-        self.step_label.setText(f"步数: {self.game.steps}")
-        result = self.game.DoMove(x=x,y=y,playerColor=player.playerColor)
-        print("MovePiece:",y,x,player.playerColor)
-        self.board.UpdateBoard()
-        if result:
-            # 赢棋了
-            if player.playerColor==Player.BLACK:
-                self.info_label.setText("黑棋胜")
-            else:
-                self.info_label.setText("白棋胜")
-            return
-
-        if self.status == GameStatus.BLACK:
-            self.status =  GameStatus.WHITE
-            self.info_label.setText("白棋")
-        else:
-            self.status =  GameStatus.BLACK
-            self.info_label.setText("黑棋")
 
     def start_task(self):
         if not self.running:
@@ -161,14 +144,107 @@ class MainWindow(QWidget):
     def run_task(self):
         while self.running:
             # 执行你的操作
-            print("Task executed at", time.ctime())
+            # print("Task executed at", time.ctime())
+
+            if self.status == GameStatus.BLACK or self.status == GameStatus.WHITE:
+                # 正在对弈中
+                self.DoPlay()
+
             # 每秒执行5次
             time.sleep(0.2)  # 0.2 秒 * 5 = 1 秒
 
+    def DoPlay(self):
+        if self.currentPlayer.IsMachine():
+            x, y = self.currentPlayer.GetNextMove()
+        else:
+            x, y = self.board.GetNextMove()
+
+        if x==-2:
+            # -2表示计算还没有结束
+            return
+        if x == -1:
+            # 找不到可以走的位置了，GameOver
+            self.info_label.setText("和棋")
+            return
+
+        self.game.steps += 1
+        self.step_label.setText(f"步数: {self.game.steps}")
+        #print("Step:",self.game.steps)
+        result = self.game.DoMove(x=x, y=y, playerColor=self.currentPlayer.playerColor)
+        #print("MovePiece:", y, x, self.currentPlayer.playerColor)
+        self.board.UpdateBoard()
+        if result:
+            # 赢棋了
+            if self.status == GameStatus.BLACK:
+                self.info_label.setText("黑棋胜")
+            else:
+                self.info_label.setText("白棋胜")
+
+            self.status = GameStatus.IDLE
+            self.running = False
+            return
+
+        if self.status == GameStatus.BLACK:
+            self.status =  GameStatus.WHITE
+            self.info_label.setText("白棋")
+            self.currentPlayer = self.player2
+        else:
+            self.status =  GameStatus.BLACK
+            self.info_label.setText("黑棋")
+            self.currentPlayer = self.player1
+        self.CalculateNextMove()
+
+    def CalculateNextMove(self):
+        if self.currentPlayer.IsMachine():
+            self.currentPlayer.CalculateNextMove()
+        else:
+            self.board.CalculateNextMove()
 
 
-        # 线程结束时重置按钮文本
-        # self.button.setText("Start")
+
+    def DoTest(self):
+        '''
+        print("Test Begin!")
+        player1=PlayerRandom02(Player.BLACK)
+        player1.rate = 0.6
+        player2=PlayerRandom02(Player.WHITE)
+        player2.rate = 0.8
+        pool = AutoPlayerArenaPool(player1=player1,player2=player2,board=None, beginColor=Player.BLACK, processNumber=10, taskNumber=2000)
+        pool.BeginMatch()
+        '''
+        rate1 = 0.94
+        rate2 = 0.9
+        left = 0.9
+        right = 1.0
+        dif = 1000
+        index = 1
+        player1 = PlayerRandom01(Player.BLACK)
+        player2 = PlayerRandom02(Player.WHITE)
+        player2.rate = rate2
+        pool = AutoPlayerArenaPool(player1=player1, player2=player2, board=None, beginColor=Player.BLACK,
+                                   processNumber=10, taskNumber=2000)
+        bw, ww = pool.BeginMatch()
+        winRate = ww/bw
+        print("Test Begin:",winRate)
+        rate2 = 0.9
+        delta = 0.02
+        while True:
+            rate2 += delta
+            player2.rate = rate2
+            pool = AutoPlayerArenaPool(player1=player1, player2=player2, board=None, beginColor=Player.BLACK,
+                                       processNumber=10, taskNumber=2000)
+            bw, ww = pool.BeginMatch()
+            newRate = ww/bw
+            if abs(newRate-winRate)<0.005:
+                print("Done:",newRate,rate2)
+                break
+
+            if newRate<winRate:
+                # 前进方向错误
+                delta *= -0.9
+
+            print(winRate,newRate,rate2, delta)
+            winRate = newRate
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):

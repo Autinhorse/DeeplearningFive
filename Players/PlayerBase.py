@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from enum import Enum, auto
+from enum import Enum
+import copy
 
 class Player(Enum):
     EMPTY = 0
@@ -11,46 +12,48 @@ class PlayerBase(ABC):
         self.game = None
         self.playerColor = playerColor      # 1 执黑， 2 执白
         self.isMachine = True
+        self.nextMove = None
+
+        self.calBoard = None
 
     @abstractmethod
-    def GetNextMove(self):
+    def CalculateNextMove(self):
         """ 由子类实现的具体下棋逻辑 """
         pass
+
+    def GetNextMove(self):
+        return self.nextMove
 
     def IsMachine(self):
         return self.isMachine
 
-    def GetFirstMove(self):
-        return 7,7
+    def manhattan_distance(self, x1, y1, x2, y2):
+        return abs(x1 - x2) + abs(y1 - y2)
+
+    def is_within_bounds(self, x, y, size):
+        return 0 <= x < size and 0 <= y < size
 
     def GetPossiblePos(self):
-        print("GetPossiblePos")
-        def manhattan_distance(x1, y1, x2, y2):
-            return abs(x1 - x2) + abs(y1 - y2)
-
-        def is_within_bounds(x, y, size):
-            return 0 <= x < size and 0 <= y < size
-
+        # print("GetPossiblePos")
         pos = []
+
+        self.calBoard = copy.deepcopy(self.game.board)
 
         for y in range(self.game.size):
             for x in range(self.game.size):
                 if self.game.boardDis[y][x] == 1 or self.game.boardDis[y][x] == 2:  # 当前位置是空位，并且2格以内有棋子
                     # print("Check:",y,x)
-                    if self.playerColor == Player.BLACK:
-                        # 执黑，需要判断禁手
-                        self.game.board[y][x] = Player.BLACK  # 先在这个位置放上黑子
-                        isForbidden = self.IsBlackForbidden(y=y, x=x)
-                        self.game.board[y][x] = Player.EMPTY  # 取走刚刚放的黑子
-                        if isForbidden:
-                            # 黑棋的禁手，跳过
-                            print("Forbidden:", y, x)
-                            continue
 
                     # 是可能下子的位置
                     pos.append(((x, y), self.game.boardDis[y][x]))
 
         return pos
+
+    def GetPieceOnCalBoardPos(self, y, x):
+        if y<0 or y>=self.game.size or x<0 or x>=self.game.size:
+            return -1
+        return self.calBoard[y][x]
+
 
     # 这个函数判断一个位置对黑是不是禁手
     # 这里判断禁手的算法有一个缺陷。就是在判断禁手的时候，某些空位可能已经是禁手了，在后面这些位置应该被当作堵死不能下子的位置而不是空位的。
@@ -77,7 +80,7 @@ class PlayerBase(ABC):
                 nx += deltax
                 if ny<0 or ny>=self.game.size or nx < 0 or nx >= self.game.size:
                     break
-                if self.game.board[ny][nx]!=1:
+                if self.calBoard[ny][nx]!=Player.BLACK:
                     # 这个位置不是黑子了
                     break
                 length += 1
@@ -88,7 +91,7 @@ class PlayerBase(ABC):
                 nx -= deltax
                 if ny < 0 or ny >= self.game.size or nx < 0 or nx >= self.game.size:
                     break
-                if self.game.board[ny][nx] != Player.BLACK:
+                if self.calBoard[ny][nx] != Player.BLACK:
                     # 这个位置不是黑子了
                     break
                 length += 1
@@ -113,7 +116,7 @@ class PlayerBase(ABC):
             ny, nx = y, x
             pattern = []
             for j in range(-4, 5):
-                pattern.append(self.game.GetPieceOnPos(y=y-deltay*j, x=x-deltax*j))
+                pattern.append(self.GetPieceOnCalBoardPos(y=y-deltay*j, x=x-deltax*j))
             for j in range(0, len(models)):
                 model = models[j]
                 match4 = False
@@ -152,7 +155,7 @@ class PlayerBase(ABC):
             ny, nx = y, x
             pattern = []
             for j in range(-4, 5):
-                pattern.append(self.game.GetPieceOnPos(y=y - deltay * j, x=x - deltax * j))
+                pattern.append(self.GetPieceOnCalBoardPos(y=y - deltay * j, x=x - deltax * j))
             for j in range(0, len(models)):
                 model = models[j]
                 match3 = False

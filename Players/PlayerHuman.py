@@ -5,7 +5,8 @@ class PlayerHuman(PlayerBase):
     def __init__(self, color):
         super().__init__(color)
         self.isMachine = False
+        self.uiBoard = None
 
-    def GetNextMove(self):
+    def CalculateNextMove(self):
         """ 由子类实现的具体下棋逻辑 """
-        pass
+        self.nextMove = (-2, -2)
