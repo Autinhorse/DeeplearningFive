@@ -1,6 +1,6 @@
 import json
 
-from Players.PlayerBase import Player
+from Players.PlayerBase import PlayerColor
 
 
 class GameFive:
@@ -12,9 +12,11 @@ class GameFive:
         self.boardDis = None
         self.InitGame(size=size)
 
+        self.isFreeMode = True      # 业余模式，黑方没有禁手
+
     # 下子，坐标x,y,
     def DoMove(self,x,y,playerColor):
-        if self.board[y][x] !=Player.EMPTY:
+        if self.board[y][x] !=PlayerColor.EMPTY:
             # 这个位置不是空的
             return
 
@@ -89,7 +91,7 @@ class GameFive:
         self.size = size  # 棋盘大小，默认15x15
 
         # 这个是棋盘的数据，0表示空，1表示黑棋，2表示白棋
-        self.board = [[Player.EMPTY] * size for _ in range(size)]
+        self.board = [[PlayerColor.EMPTY] * size for _ in range(size)]
 
         # 因为希望将下的位置控制在已经有子的3格以内，但是如果每次都去判断哪些空位置周围3格以内有棋子算法开销过大
         # 所以使用了boardDis预处理数组，在每次下子的时候更新这个子周围的位置信息。
@@ -98,6 +100,10 @@ class GameFive:
         self.current_player = 1  # 当前玩家，1为黑棋，2为白棋
         
         self.steps = 0  # 记录步数
+
+    def SetBoard(self, board):
+        self.board = board
+        self.ResetDisData()
 
     def SaveGame(self):
         print("Save Game")
@@ -132,11 +138,12 @@ class GameFive:
 
     def ResetDisData(self):
         self.steps = 0
+
         # 修改周围空格信息
         self.boardDis = [[100 for _ in range(self.size)] for _ in range(self.size)]
         for y in range(self.size):
             for x in range(self.size):
-                if self.board[y][x] != Player.EMPTY:
+                if self.board[y][x] != PlayerColor.EMPTY:
                     self.steps += 1
                     for i in range(-2, 3):
                         if x + i < 0 and x + i >= self.size:

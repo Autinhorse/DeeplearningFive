@@ -1,11 +1,10 @@
 from Players.PlayerBase import RobotBase, PlayerColor, RobotType
 import random
 
-class RobotRandom01(RobotBase):
+class RobotRandom03(RobotBase):
     def __init__(self, color):
         super().__init__(color)
-        self.distance = 2   # 下一步必须下在距离已经有的棋子多远的位置
-        self.type = RobotType.Random01
+        self.type = RobotType.Random03
 
     def CalculateNextMove(self):
         self.nextMove = (-2, -2) # -2, -2 表示还没有计算出结果

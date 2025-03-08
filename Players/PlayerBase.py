@@ -2,12 +2,44 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import copy
 
-class Player(Enum):
+
+
+
+class PlayerColor(Enum):
     EMPTY = 0
     BLACK = 1
     WHITE = 2
 
-class PlayerBase(ABC):
+class RobotType(Enum):
+    Human = 0
+    Random01 = 1
+    Random02 = 2
+    Random03 = 3
+    MCTS    = 4
+
+class RobotBase(ABC):
+    @staticmethod
+    def CopyRobot(robot):
+        from Players.PlayerHuman import RobotHuman
+        from Players.PlayerMCTS import RobotMCTS
+        from Players.PlayerRandom01 import RobotRandom01
+        from Players.PlayerRandom02 import RobotRandom02
+        from Players.PlayerRandom03 import RobotRandom03
+
+        newRobot = None
+        if robot.type==RobotType.Human:
+            newRobot = RobotHuman(robot.playerColor)
+        elif robot.type==RobotType.MCTS:
+            newRobot = RobotMCTS(robot.playerColor)
+        elif robot.type==RobotType.Random01:
+            newRobot = RobotRandom01(robot.playerColor)
+        elif robot.type==RobotType.Random02:
+            newRobot = RobotRandom02(robot.playerColor)
+            newRobot.rate = robot.rate
+        elif robot.type==RobotType.Random03:
+            newRobot = RobotRandom03(robot.playerColor)
+        return newRobot
+
     def __init__(self,playerColor):
         self.game = None
         self.playerColor = playerColor      # 1 执黑， 2 执白
@@ -15,6 +47,8 @@ class PlayerBase(ABC):
         self.nextMove = None
 
         self.calBoard = None
+        self.distance = 1   # 下一步必须下在距离已经有的棋子多远的位置
+        self.type = None
 
     @abstractmethod
     def CalculateNextMove(self):
@@ -41,7 +75,7 @@ class PlayerBase(ABC):
 
         for y in range(self.game.size):
             for x in range(self.game.size):
-                if self.game.boardDis[y][x] == 1 or self.game.boardDis[y][x] == 2:  # 当前位置是空位，并且2格以内有棋子
+                if self.game.boardDis[y][x] > 0 and self.game.boardDis[y][x] <=self.distance:  # 当前位置是空位，并且2格以内有棋子
                     # print("Check:",y,x)
 
                     # 是可能下子的位置
@@ -61,6 +95,11 @@ class PlayerBase(ABC):
     # 因为我们主要是学习机器学习算法，这里就不搞这么复杂了，把常见禁手判断出来就好。这个问题会造成把一些不应该是禁手的位置判断成禁手，而不是
     # 反过来。所以不会下错。先这样吧。
     def IsBlackForbidden(self,x,y):
+
+        if self.game.isFreeMode:
+            # 业余模式，黑方没有禁手
+            return False
+
         # 判断禁手的标准比较复杂
         dir = [(0,-1),(-1,-1),(-1,0),(1,-1)]     # 搜索的四个方向
 
@@ -80,7 +119,7 @@ class PlayerBase(ABC):
                 nx += deltax
                 if ny<0 or ny>=self.game.size or nx < 0 or nx >= self.game.size:
                     break
-                if self.calBoard[ny][nx]!=Player.BLACK:
+                if self.calBoard[ny][nx]!=PlayerColor.BLACK:
                     # 这个位置不是黑子了
                     break
                 length += 1
@@ -91,7 +130,7 @@ class PlayerBase(ABC):
                 nx -= deltax
                 if ny < 0 or ny >= self.game.size or nx < 0 or nx >= self.game.size:
                     break
-                if self.calBoard[ny][nx] != Player.BLACK:
+                if self.calBoard[ny][nx] != PlayerColor.BLACK:
                     # 这个位置不是黑子了
                     break
                 length += 1

@@ -3,7 +3,7 @@ import copy
 from GameFive import GameFive
 from enum import Enum
 
-from Players.PlayerBase import Player
+from Players.PlayerBase import PlayerColor, RobotBase
 
 
 class MatchResult(Enum):
@@ -13,12 +13,12 @@ class MatchResult(Enum):
     DRAW = 3
 
 class AutoPlayerArena:
-    def __init__(self, player1, player2, board=None, beginColor=Player.BLACK):
-        self.player1 = copy.deepcopy(player1)
-        self.player2 = copy.deepcopy(player2)
+    def __init__(self, player1, player2, board=None, beginColor=PlayerColor.BLACK):
+        self.player1 = RobotBase.CopyRobot(player1)
+        self.player2 = RobotBase.CopyRobot(player2)
         self.beginColor = beginColor
         self.currentColor = beginColor
-        self.currentPlayer = player1 if beginColor==Player.BLACK else player2
+        self.currentPlayer = player1 if beginColor == PlayerColor.BLACK else player2
         self.game = GameFive(15)
 
         self.player1.game = self.game
@@ -32,7 +32,7 @@ class AutoPlayerArena:
             self.game.board = copy.deepcopy(self.board)
             self.game.ResetDisData()
         self.currentColor = self.beginColor
-        self.currentPlayer = self.player1 if self.beginColor == Player.BLACK else self.player2
+        self.currentPlayer = self.player1 if self.beginColor == PlayerColor.BLACK else self.player2
 
         self.currentPlayer.CalculateNextMove()
         while True:
@@ -51,17 +51,17 @@ class AutoPlayerArena:
             # print("Step:",self.game.steps,"Pos:",y,x,"Color:",self.currentPlayer.playerColor)
             if result:
                 # 赢棋了
-                if self.currentColor == Player.BLACK:
+                if self.currentColor == PlayerColor.BLACK:
                     self.result = MatchResult.BLACKWIN
                 else:
                     self.result = MatchResult.WHITEWIN
                 break
 
-            if self.currentColor == Player.BLACK:
-                self.currentColor = Player.WHITE
+            if self.currentColor == PlayerColor.BLACK:
+                self.currentColor = PlayerColor.WHITE
                 self.currentPlayer = self.player2
             else:
-                self.currentColor = Player.BLACK
+                self.currentColor = PlayerColor.BLACK
                 self.currentPlayer = self.player1
             self.currentPlayer.CalculateNextMove()
 

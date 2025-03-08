@@ -1,14 +1,16 @@
-from Players.PlayerBase import PlayerBase, Player
+from Players.PlayerBase import RobotBase, PlayerColor, RobotType
 import random
 
-class PlayerRandom02(PlayerBase):
+class RobotRandom02(RobotBase):
     def __init__(self, color):
         super().__init__(color)
-        self.rate = 1
+        self.rate = 1.0
+        self.distance = 2   # 下一步必须下在距离已经有的棋子多远的位置
+        self.type = RobotType.Random02
 
     def CalculateNextMove(self):
 
-        if self.playerColor==Player.BLACK and self.game.steps == 0:
+        if self.playerColor==PlayerColor.BLACK and self.game.steps == 0:
             # 是第一步开局，走在中心
             self.nextMove =  (7, 7)
             return

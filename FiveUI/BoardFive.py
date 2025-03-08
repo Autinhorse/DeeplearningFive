@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHB
 from PyQt5.QtGui import QPainter, QColor, QPen
 from PyQt5.QtCore import Qt, QPoint
 
-from Players.PlayerBase import Player
+from Players.PlayerBase import PlayerColor
 
 
 class BoardFive(QWidget):
@@ -35,16 +35,16 @@ class BoardFive(QWidget):
         cn = 0
         for y in range(self.game.size):
             for x in range(self.game.size):
-                if self.game.board[y][x] != Player.EMPTY:
+                if self.game.board[y][x] != PlayerColor.EMPTY:
                     cn += 1
-                    if self.game.board[y][x] == Player.BLACK:
+                    if self.game.board[y][x] == PlayerColor.BLACK:
                         # 黑子
                         color = QColor(Qt.black)
                         painter.setBrush(color)
                         painter.setPen(QPen(color, 1))
                         painter.drawEllipse(QPoint((int)(self.margin + (x + 1) * self.grid_size - self.grid_size / 2),
                                                    (int)(self.margin + (y + 1) * self.grid_size - self.grid_size / 2)), 18, 18)
-                    elif self.game.board[y][x] == Player.WHITE:
+                    elif self.game.board[y][x] == PlayerColor.WHITE:
                         # 白子
                         # 设置填充颜色
                         fill_color = QColor(Qt.white)
@@ -70,7 +70,7 @@ class BoardFive(QWidget):
             y = round((pos.y() - self.margin-self.grid_size/2) / self.grid_size)
             print("Mouse Press:",y,x)
             if 0 <= x < self.game.size and 0 <= y < self.game.size:
-                if self.game.board[y][x] != Player.EMPTY:
+                if self.game.board[y][x] != PlayerColor.EMPTY:
                     return
                 print("Click:",y,x)
                 self.nextMove = (x, y)

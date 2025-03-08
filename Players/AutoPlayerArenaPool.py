@@ -1,7 +1,7 @@
 import time
 
 from Players.AutoPlayerArena import AutoPlayerArena, MatchResult
-from Players.PlayerBase import Player
+from Players.PlayerBase import PlayerColor
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
@@ -29,7 +29,7 @@ class AutoPlayerArenaPool:
         arena.DoPlayAMatch()
         return arena.GetResult()
 
-    def BeginMatch(self):
+    def DoMatch(self):
 
         self.blackWin = 0
         self.whiteWin = 0
@@ -74,8 +74,7 @@ class AutoPlayerArenaPool:
 
         end_time = time.time()
 
-        print("\n🎉 所有任务计算完成！")
-        print("Black Win:", self.blackWin, "White Win:", self.whiteWin, "Draw:", self.draw)
-        print(f"⏳ 总耗时：{end_time - start_time:.2f} 秒")
+        #print("Black Win:", self.blackWin, "White Win:", self.whiteWin, "Draw:", self.draw)
+        #print(f"\n🎉 所有任务计算完成！ ⏳总耗时：{end_time - start_time:.2f} 秒")
 
-        return self.blackWin,self.whiteWin
+        return self.blackWin,self.whiteWin,self.draw

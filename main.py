@@ -10,19 +10,23 @@ from FiveUI.BoardFive import BoardFive
 from GameFive import GameFive
 from Players.AutoPlayerArena import AutoPlayerArena, MatchResult
 from Players.AutoPlayerArenaPool import AutoPlayerArenaPool
-from Players.PlayerBase import PlayerBase, Player
-from Players.PlayerRandom01 import PlayerRandom01
-from Players.PlayerHuman import PlayerHuman
+from Players.PlayerBase import RobotBase, PlayerColor
+from Players.PlayerHuman import RobotHuman
 
 from enum import Enum, auto
 
-from Players.PlayerRandom02 import PlayerRandom02
+from Players.PlayerMCTS import RobotMCTS
+from Players.PlayerRandom01 import RobotRandom01
+from Players.PlayerRandom02 import RobotRandom02
+from Players.PlayerRandom03 import RobotRandom03
 
 
 class GameStatus(Enum):
     IDLE = 0
     BLACK = 1
     WHITE = 2
+
+
 
 class MainWindow(QWidget):
     def __init__(self, size=15):
@@ -101,10 +105,10 @@ class MainWindow(QWidget):
 
         # 棋盘部分
         # self.player1 = PlayerHuman(Player.BLACK)
-        self.player1 = PlayerRandom02(Player.BLACK)
-        self.player1.rate = 0
-        self.player2 = PlayerRandom02(Player.WHITE)
-        self.player2.rate = 1
+        self.player1 = RobotMCTS(PlayerColor.BLACK)
+        #self.player1.rate = 0
+        self.player2 = RobotMCTS(PlayerColor.WHITE)
+        #self.player2.rate = 1
         self.game.InitGame(size=15)
         self.player1.game = self.game
         self.player2.game = self.game
@@ -200,7 +204,30 @@ class MainWindow(QWidget):
         else:
             self.board.CalculateNextMove()
 
+    def DoTest1(self):
+        player1 = RobotRandom03(PlayerColor.BLACK)
+        player2 = RobotMCTS(PlayerColor.WHITE)
 
+        pool = AutoPlayerArenaPool(player1=player1, player2=player2, board=None, beginColor=PlayerColor.BLACK,
+                                   processNumber=10, taskNumber=20)
+        bw, ww, draw = pool.DoMatch()
+
+        print("Test result: Black Win:", bw, "White Win:", ww, "Draw:",draw)
+
+    def DoTestBundle(self):
+        player1 = RobotRandom01(PlayerColor.BLACK)
+        player2 = RobotRandom02(PlayerColor.WHITE)
+
+        for i in range(0, 201):
+            rate2 = 0.6325 + 0.0025 * i
+            if rate2 > 1.0:
+                break
+            player2.rate = rate2
+            pool = AutoPlayerArenaPool(player1=player1, player2=player2, board=None, beginColor=PlayerColor.BLACK,
+                                       processNumber=10, taskNumber=10000)
+            bw, ww, draw = pool.DoMatch()
+            winRate = ww / bw
+            print("Test result:", rate2, winRate)
 
     def DoTest(self):
         '''
@@ -212,20 +239,10 @@ class MainWindow(QWidget):
         pool = AutoPlayerArenaPool(player1=player1,player2=player2,board=None, beginColor=Player.BLACK, processNumber=10, taskNumber=2000)
         pool.BeginMatch()
         '''
-        rate1 = 0.94
-        rate2 = 0.9
-        left = 0.9
-        right = 1.0
-        dif = 1000
-        index = 1
-        player1 = PlayerRandom01(Player.BLACK)
-        player2 = PlayerRandom02(Player.WHITE)
-        player2.rate = rate2
-        pool = AutoPlayerArenaPool(player1=player1, player2=player2, board=None, beginColor=Player.BLACK,
-                                   processNumber=10, taskNumber=2000)
-        bw, ww = pool.BeginMatch()
-        winRate = ww/bw
-        print("Test Begin:",winRate)
+
+        self.DoTest1()
+
+        '''
         rate2 = 0.9
         delta = 0.02
         while True:
@@ -245,6 +262,7 @@ class MainWindow(QWidget):
 
             print(winRate,newRate,rate2, delta)
             winRate = newRate
+        '''
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
