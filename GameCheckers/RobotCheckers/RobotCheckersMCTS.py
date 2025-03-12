@@ -58,7 +58,7 @@ class RobotCheckersMCTS(RobotCheckersBase):
 
     @staticmethod
     def worker(result,board,pos,playerColor,tryNumber,useThread):
-        print("Worker process started:", pos)
+        #print("Worker process started:", pos)
         start_time = time.time()
 
         bestMove, bestRate = None, -1
@@ -89,7 +89,7 @@ class RobotCheckersMCTS(RobotCheckersBase):
                                           processNumber=1, taskNumber=tryNumber)
                 bw, ww, draw = pool.DoMatch()
             else:
-                print("Try next move:", move, tryNumber)
+                #print("Try next move:", move, tryNumber)
                 tempBoard = copy.deepcopy(game.board)
 
                 for i in range(tryNumber):
@@ -144,15 +144,15 @@ class RobotCheckersMCTS(RobotCheckersBase):
                 rate = bw / ww if playerColor == PlayerColor.BLACK else ww / bw
             else:
                 rate = 0
-            print("Move:",move,rate)
+            #print("Move:",move,rate)
             if rate > bestRate:
                 bestRate = rate
                 bestMove = move
-                print("Is Best Rate:", bestMove)
+                #print("Is Best Rate:", bestMove)
 
             result['result'] = bestMove
 
-        print("Final Best Move:", bestMove, result['result'], bestRate)
+        #print("Final Best Move:", bestMove, result['result'], bestRate)
 
         end_time = time.time()
         #print(f"Worker process finished and set the event   ⏳总耗时：{end_time - start_time:.2f} 秒")

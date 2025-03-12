@@ -33,6 +33,7 @@ class AutoPlayerArena:
 
     def DoPlayAMatch(self):
         #start_time = time.time()
+        records = []
         self.game.InitGame()
         if self.board is not None:
             self.game.board = copy.deepcopy(self.board)
@@ -43,7 +44,7 @@ class AutoPlayerArena:
         self.currentPlayer.CalculateNextMove()
         while True:
             nextMove = self.currentPlayer.GetNextMove()
-            if nextMove[0]==-2:
+            if nextMove is None:
                 # 还没影结果
                 continue
             if nextMove[0]==-1:
@@ -53,7 +54,10 @@ class AutoPlayerArena:
                 break
 
             result = self.game.DoMove(nextMove=nextMove, playerColor=self.currentPlayer.playerColor)
+            records.append((self.currentPlayer.playerColor,nextMove))
             self.game.steps += 1
+            print("Step:",self.game.steps)
+            print(records)
             # print("Step:",self.game.steps,"Pos:",y,x,"Color:",self.currentPlayer.playerColor)
             if result:
                 # 赢棋了

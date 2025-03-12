@@ -14,6 +14,8 @@ class GameCheckers:
         self.whitePieces = []
         self.InitGame()
 
+        self.record = []
+
     # 下子，坐标x,y。
     # 返回值True，表示赢了，棋局结束。False表示还需要继续下。
     def DoMove(self, nextMove, playerColor):

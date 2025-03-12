@@ -1,6 +1,8 @@
+import random
 import sys
 import time
 import threading
+import pickle
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QApplication
 
@@ -11,6 +13,7 @@ from GameCheckers.RobotCheckers.RobotCheckersMCTS import RobotCheckersMCTS
 from GameCheckers.RobotCheckers.RobotCheckersRandom01 import RobotCheckersRandom01
 from GameCheckers.RobotCheckers.RobotCheckersRating import RobotCheckersRating
 from GameFive.Five import GameStatus
+from RobotArena.AutoRobotArena import MatchResult
 from RobotArena.AutoRobotArenaPool import AutoRobotArenaPool
 from GameCheckers.RobotCheckers.RobotCheckersBase import PlayerColor
 
@@ -89,14 +92,13 @@ class MainWindow(QWidget):
             return
 
         # 棋盘部分
-        # self.player1 = PlayerHuman(Player.BLACK)
-        #self.player1 = RobotFiveMCTS(PlayerColor.BLACK)
-        #self.player1 = RobotCheckersRandom01(PlayerColor.BLACK, 0.0)
-        self.player1 = RobotCheckersMCTS(PlayerColor.BLACK)
+        self.player1 = RobotCheckersRandom01(PlayerColor.BLACK, 0.9)
+        #self.player1 = RobotCheckersMCTS(PlayerColor.BLACK)
         #self.player1.rate = 0
         #self.player2 = RobotCheckersMCTS(PlayerColor.WHITE)
         #self.player2 = RobotCheckersRandom01(PlayerColor.WHITE, 0.8)
-        self.player2 = RobotCheckersHuman(PlayerColor.WHITE)
+        #self.player2 = RobotCheckersHuman(PlayerColor.WHITE)
+        self.player2 = RobotCheckersRating(PlayerColor.WHITE)
 
         #self.player2.rate = 1
         self.game.InitGame()
@@ -120,8 +122,10 @@ class MainWindow(QWidget):
         self.game.SaveGame()
 
     def LoadGame(self):
-        self.game.LoadGame()
-        self.board.reset_game()
+        self.LoadData()
+
+        #self.game.LoadGame()
+        #self.board.reset_game()
 
 
     def start_task(self):
@@ -201,9 +205,72 @@ class MainWindow(QWidget):
         else:
             self.board.CalculateNextMove()
 
+    def DoGenerateGame(self):
+        gameNumber = 100
+        gameIndex = 0
+        fileSize = 10
+
+        records = []
+        for i in range(gameNumber):
+            print("Game:",i+1)
+            #随机分配机器人
+            if random.randint(0,100)>50:
+                player1 = RobotCheckersRandom01(PlayerColor.BLACK, 0.9)
+                player2 = RobotCheckersRating(PlayerColor.WHITE)
+            else:
+                player2 = RobotCheckersRandom01(PlayerColor.BLACK, 0.9)
+                player1 = RobotCheckersRating(PlayerColor.WHITE)
+
+            # self.player2.rate = 1
+            game =GameCheckers()
+            player1.game = game
+            player2.game = game
+
+            # self.board.reset_game()
+
+            status = GameStatus.BLACK
+            currentPlayer = player1
+
+            gameResult = MatchResult.DRAW
+            record = []
+            while True:
+                currentPlayer.CalculateNextMove()
+                nextMove = currentPlayer.GetNextMove()
+                record.append(nextMove)
+                print("Next Move:",nextMove,currentPlayer)
+                if nextMove[0] == -1:
+                    # 全堵死了
+                    # 找不到可以走的位置了，GameOver
+                    break
+
+                game.steps += 1
+                result = game.DoMove(nextMove=nextMove, playerColor=currentPlayer.playerColor)
+
+                if result:
+                    # 赢棋了
+                    if status == GameStatus.BLACK:
+                        gameResult = MatchResult.BLACKWIN
+                    else:
+                        gameResult = MatchResult.WHITEWIN
+                    break
+
+                if status == GameStatus.BLACK:
+                    status = GameStatus.WHITE
+                    currentPlayer = player2
+                else:
+                    status = GameStatus.BLACK
+                    currentPlayer = player1
+
+            records.append(record)
+            if (i+1) % fileSize == 0:
+                with open(f"data{i+1}.pkl", 'wb') as f:
+                    pickle.dump(records, f)
+                records.clear()
+
+
     def DoTest1(self):
         #player1 = RobotCheckersRandom01(PlayerColor.BLACK, 0.8)
-        player1 = RobotCheckersMCTS(PlayerColor.BLACK)
+        player1 = RobotCheckersRandom01(PlayerColor.BLACK, 0.9)
         player2 = RobotCheckersRating(PlayerColor.WHITE)
 
         pool = AutoRobotArenaPool(player1=player1, player2=player2, game=GameCheckers(), board=None, beginColor=PlayerColor.BLACK,
@@ -237,8 +304,9 @@ class MainWindow(QWidget):
         pool.BeginMatch()
         '''
 
-        self.DoTest1()
+        #self.DoTest1()
         # self.DoTestBundle()
+        self.DoGenerateGame()
         '''
         rate2 = 0.9
         delta = 0.02
@@ -260,6 +328,14 @@ class MainWindow(QWidget):
             print(winRate,newRate,rate2, delta)
             winRate = newRate
         '''
+
+    def LoadData(self):
+        # 从文件中读取
+        with open('data10.pkl', 'rb') as f:
+            records = pickle.load(f)
+        print("Records:",len(records))
+        for record in records:
+            print("Record:",len(record))
 
 class Checkers():
     def __init__(self):

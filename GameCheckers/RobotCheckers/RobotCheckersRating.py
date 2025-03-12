@@ -111,7 +111,6 @@ class RobotCheckersRating(RobotCheckersBase):
         # -----------------------------------------------------------------------------------------------------------------------------
         start_time = time.time()
 
-        bestMove, bestRate = None, -1
         player1 = RobotCheckersRandom01(PlayerColor.BLACK,0.8)
         player2 = RobotCheckersRandom01(PlayerColor.WHITE,0.8)
 
@@ -122,7 +121,7 @@ class RobotCheckersRating(RobotCheckersBase):
         maxFlag = 1 if playerColor == PlayerColor.BLACK else -1
 
         maxValue = -1000000
-        bestMove = None
+        bestMove = []
 
         for nextMove in pos:
             game.SetBoard(copy.deepcopy(board))
@@ -131,17 +130,19 @@ class RobotCheckersRating(RobotCheckersBase):
             isWin = game.DoMove(nextMove=nextMove,playerColor=playerColor)
             if isWin:
                 # 这个点赢了，直接退出
-                bestMove = nextMove
+                bestMove.clear()
+                bestMove.append(nextMove)
                 break
-            # 取得所有可能的走法
-            # pos = player1.GetAllPossibleMove() if playerColor == PlayerColor.BLACK else player2.GetAllPossibleMove()
 
             value = GetRatingOfBoard()*maxFlag
             if value>maxValue:
                 maxValue = value
-                bestMove = nextMove
+                bestMove.clear()
+                bestMove.append(nextMove)
+            elif value==maxValue:
+                bestMove.append(nextMove)
 
-        rate = 0
+        rate = 100
         if steps>50:
             rate = 200
         if steps>75:
@@ -155,7 +156,7 @@ class RobotCheckersRating(RobotCheckersBase):
         if random.randint(0,1000)<rate:
             result['result'] = pos[random.randint(0,len(pos)-1)]
         else:
-            result['result'] = bestMove
+            result['result'] = bestMove[random.randint(0,len(bestMove)-1)]
         end_time = time.time()
         #print(f"Worker process finished and set the event   ⏳总耗时：{end_time - start_time:.2f} 秒")
 
