@@ -10,35 +10,9 @@ class PlayerColor(Enum):
     BLACK = 1
     WHITE = 2
 
-class RobotType(Enum):
-    Human = 0
-    Random01 = 1
-    Random02 = 2
-    Random03 = 3
-    MCTS    = 4
 
-class RobotBase(ABC):
-    @staticmethod
-    def CopyRobot(robot):
-        from Players.PlayerHuman import RobotHuman
-        from Players.PlayerMCTS import RobotMCTS
-        from Players.PlayerRandom01 import RobotRandom01
-        from Players.PlayerRandom02 import RobotRandom02
-        from Players.PlayerRandom03 import RobotRandom03
 
-        newRobot = None
-        if robot.type==RobotType.Human:
-            newRobot = RobotHuman(robot.playerColor)
-        elif robot.type==RobotType.MCTS:
-            newRobot = RobotMCTS(robot.playerColor)
-        elif robot.type==RobotType.Random01:
-            newRobot = RobotRandom01(robot.playerColor)
-        elif robot.type==RobotType.Random02:
-            newRobot = RobotRandom02(robot.playerColor)
-            newRobot.rate = robot.rate
-        elif robot.type==RobotType.Random03:
-            newRobot = RobotRandom03(robot.playerColor)
-        return newRobot
+class RobotFiveBase(ABC):
 
     def __init__(self,playerColor):
         self.game = None
@@ -61,12 +35,13 @@ class RobotBase(ABC):
     def IsMachine(self):
         return self.isMachine
 
-    def manhattan_distance(self, x1, y1, x2, y2):
+    '''
+    def manhattan_distance(self, y1, x1, y2, x2):
         return abs(x1 - x2) + abs(y1 - y2)
 
     def is_within_bounds(self, x, y, size):
         return 0 <= x < size and 0 <= y < size
-
+    '''
     def GetPossiblePos(self):
         # print("GetPossiblePos")
         pos = []
@@ -79,7 +54,7 @@ class RobotBase(ABC):
                     # print("Check:",y,x)
 
                     # 是可能下子的位置
-                    pos.append(((x, y), self.game.boardDis[y][x]))
+                    pos.append(((y, x), self.game.boardDis[y][x]))
 
         return pos
 

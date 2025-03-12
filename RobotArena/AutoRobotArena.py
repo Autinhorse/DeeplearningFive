@@ -1,9 +1,12 @@
 import copy
+import time
 
-from GameFive import GameFive
+from GameCheckers.GameCheckers import GameCheckers
+from GameFive.GameFive import GameFive
 from enum import Enum
 
-from Players.PlayerBase import PlayerColor, RobotBase
+from GameFive.RobotFive.RobotFiveBase import PlayerColor, RobotFiveBase
+from RobotArena.RobotFactory import RobotFactory
 
 
 class MatchResult(Enum):
@@ -13,40 +16,43 @@ class MatchResult(Enum):
     DRAW = 3
 
 class AutoPlayerArena:
-    def __init__(self, player1, player2, board=None, beginColor=PlayerColor.BLACK):
-        self.player1 = RobotBase.CopyRobot(player1)
-        self.player2 = RobotBase.CopyRobot(player2)
+    def __init__(self, player1, player2,game,board=None, beginColor=PlayerColor.BLACK):
+        self.player1 = RobotFactory.CopyRobot(player1)
+        self.player2 = RobotFactory.CopyRobot(player2)
         self.beginColor = beginColor
         self.currentColor = beginColor
         self.currentPlayer = player1 if beginColor == PlayerColor.BLACK else player2
-        self.game = GameFive(15)
+        self.game = copy.deepcopy(game) #GameCheckers() #GameFive()
 
         self.player1.game = self.game
         self.player2.game = self.game
         self.board = board
         self.result = MatchResult.PLAYING
 
+        self.count = 0
+
     def DoPlayAMatch(self):
-        self.game.InitGame(size=15)
+        #start_time = time.time()
+        self.game.InitGame()
         if self.board is not None:
             self.game.board = copy.deepcopy(self.board)
-            self.game.ResetDisData()
+            self.game.ResetData()
         self.currentColor = self.beginColor
         self.currentPlayer = self.player1 if self.beginColor == PlayerColor.BLACK else self.player2
 
         self.currentPlayer.CalculateNextMove()
         while True:
-            x, y = self.currentPlayer.GetNextMove()
-            if x==-2:
+            nextMove = self.currentPlayer.GetNextMove()
+            if nextMove[0]==-2:
                 # 还没影结果
                 continue
-            if x==-1:
+            if nextMove[0]==-1:
                 # 无棋可走
-                print("Set Draw")
+                #print("Set Draw")
                 self.result = MatchResult.DRAW
                 break
 
-            result = self.game.DoMove(x=x, y=y, playerColor=self.currentPlayer.playerColor)
+            result = self.game.DoMove(nextMove=nextMove, playerColor=self.currentPlayer.playerColor)
             self.game.steps += 1
             # print("Step:",self.game.steps,"Pos:",y,x,"Color:",self.currentPlayer.playerColor)
             if result:
@@ -64,6 +70,9 @@ class AutoPlayerArena:
                 self.currentColor = PlayerColor.BLACK
                 self.currentPlayer = self.player1
             self.currentPlayer.CalculateNextMove()
+        #end_time = time.time()
+        #print(f"\n🎉 所有任务计算完成！ ⏳总耗时：{end_time - start_time:.2f} 秒")
+        # print("Complete a game!",self.count)
 
     def GetResult(self):
         # print("GetResult:",self.result)

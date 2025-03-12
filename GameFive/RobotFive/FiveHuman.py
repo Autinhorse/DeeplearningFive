@@ -1,12 +1,13 @@
-from Players.PlayerBase import RobotBase, RobotType
+from GameFive.RobotFive.RobotFiveBase import RobotFiveBase
+from RobotArena.RobotFactory import RobotType
 
 
-class RobotHuman(RobotBase):
+class RobotFiveHuman(RobotFiveBase):
     def __init__(self, color):
         super().__init__(color)
         self.isMachine = False
         self.uiBoard = None
-        self.type = RobotType.Human
+        self.type = RobotType.FiveHuman
 
     def CalculateNextMove(self):
         """ 由子类实现的具体下棋逻辑 """

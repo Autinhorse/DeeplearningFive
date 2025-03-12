@@ -1,21 +1,22 @@
 import json
 
-from Players.PlayerBase import PlayerColor
+from GameFive.RobotFive.RobotFiveBase import PlayerColor
 
 
 class GameFive:
-    def __init__(self,  size=15):
+    def __init__(self):
         self.steps = None
         self.current_player = None
         self.board = None
-        self.size = None
+        self.size = 15
         self.boardDis = None
-        self.InitGame(size=size)
+        self.InitGame()
 
         self.isFreeMode = True      # 业余模式，黑方没有禁手
 
     # 下子，坐标x,y,
-    def DoMove(self,x,y,playerColor):
+    def DoMove(self,nextMove,playerColor):
+        y,x = nextMove
         if self.board[y][x] !=PlayerColor.EMPTY:
             # 这个位置不是空的
             return
@@ -87,23 +88,23 @@ class GameFive:
             return -1
         return self.board[y][x]
 
-    def InitGame(self, size=15):
-        self.size = size  # 棋盘大小，默认15x15
+    def InitGame(self):
+        self.size = 15  # 棋盘大小，默认15x15
 
         # 这个是棋盘的数据，0表示空，1表示黑棋，2表示白棋
-        self.board = [[PlayerColor.EMPTY] * size for _ in range(size)]
+        self.board = [[PlayerColor.EMPTY] * self.size for _ in range(self.size)]
 
         # 因为希望将下的位置控制在已经有子的3格以内，但是如果每次都去判断哪些空位置周围3格以内有棋子算法开销过大
         # 所以使用了boardDis预处理数组，在每次下子的时候更新这个子周围的位置信息。
         # 初始化为100，每次下子，将下子位置更新为-1，然后更新周围7*7的矩形区域的空格位置，如果到这个棋子的距离更近，就更新数据
-        self.boardDis = [[100] * size for _ in range(size)]
+        self.boardDis = [[100] * self.size for _ in range(self.size)]
         self.current_player = 1  # 当前玩家，1为黑棋，2为白棋
         
         self.steps = 0  # 记录步数
 
     def SetBoard(self, board):
         self.board = board
-        self.ResetDisData()
+        self.ResetData()
 
     def SaveGame(self):
         print("Save Game")
@@ -111,13 +112,13 @@ class GameFive:
             'size': self.size,
             'board': self.board
         }
-        with open('gamedata.json', 'w', encoding='utf-8') as file:
+        with open('../gamedata.json', 'w', encoding='utf-8') as file:
             json.dump(data, file, ensure_ascii=False, indent=4)
 
     def LoadGame(self):
         print("Load Game")
         try:
-            with open('gamedata.json', 'r', encoding='utf-8') as file:
+            with open('../gamedata.json', 'r', encoding='utf-8') as file:
                 data = json.load(file)
 
             self.size = data['size']
@@ -125,7 +126,7 @@ class GameFive:
             print("Board Size:",self.size)
             print("board:",len(self.board))
 
-            self.ResetDisData()
+            self.ResetData()
 
         except FileNotFoundError:
             print("Error: The file 'gamedata.json' was not found.")
@@ -136,7 +137,7 @@ class GameFive:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
 
-    def ResetDisData(self):
+    def ResetData(self):
         self.steps = 0
 
         # 修改周围空格信息

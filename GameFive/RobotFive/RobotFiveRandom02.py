@@ -1,12 +1,15 @@
-from Players.PlayerBase import RobotBase, PlayerColor, RobotType
+from GameFive.RobotFive.RobotFiveBase import RobotFiveBase, PlayerColor
 import random
 
-class RobotRandom02(RobotBase):
+from RobotArena.RobotFactory import RobotType
+
+
+class RobotFiveRandom02(RobotFiveBase):
     def __init__(self, color):
         super().__init__(color)
         self.rate = 1.0
         self.distance = 2   # 下一步必须下在距离已经有的棋子多远的位置
-        self.type = RobotType.Random02
+        self.type = RobotType.FiveRandom02
 
     def CalculateNextMove(self):
 
@@ -28,11 +31,11 @@ class RobotRandom02(RobotBase):
         # 80%概率下在一个格子远的位置，20%概率下在两个格子远的位置。这里额80%和20%是拍脑袋想出来的。后面会研究怎么用算法评估。
         pos1 = []
         pos2 = []
-        for (x,y),dis in pos:
+        for (y,x),dis in pos:
             if dis == 1:
-                pos1.append((x, y))
+                pos1.append((y, x))
             else:
-                pos2.append((x, y))
+                pos2.append((y, x))
         if len(pos2)>0:
             if random.randint(0, 999) <= self.rate*1000:
                 self.nextMove = pos1[random.randint(0, len(pos1)-1)]

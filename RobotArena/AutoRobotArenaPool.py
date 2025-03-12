@@ -1,12 +1,11 @@
 import time
 
-from Players.AutoPlayerArena import AutoPlayerArena, MatchResult
-from Players.PlayerBase import PlayerColor
+from RobotArena.AutoRobotArena import AutoPlayerArena, MatchResult
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
-class AutoPlayerArenaPool:
-    def __init__(self, player1, player2, board, beginColor, processNumber, taskNumber):
+class AutoRobotArenaPool:
+    def __init__(self, player1, player2, game, board, beginColor, processNumber, taskNumber):
         self.player1 = player1
         self.player2 = player2
         self.board = board
@@ -16,16 +15,20 @@ class AutoPlayerArenaPool:
 
         self.arenaPool = []
         self.arenaActive = []
+        self.game = game
         for _ in range(processNumber):
-            self.arenaPool.append(AutoPlayerArena(player1=player1,player2=player2,board=self.board, beginColor=self.beginColor))
+            self.arenaPool.append(AutoPlayerArena(player1=player1,player2=player2,game=self.game,board=self.board, beginColor=self.beginColor))
             self.arenaActive.append(False)
 
         self.blackWin = 0
         self.whiteWin = 0
         self.draw = 0
+        self.count = 0
 
     def DoTestTask(self):
-        arena = AutoPlayerArena(player1=self.player1,player2=self.player2,board=self.board, beginColor=self.beginColor)
+        self.count+=1
+        arena = AutoPlayerArena(player1=self.player1,player2=self.player2,game=self.game,board=self.board, beginColor=self.beginColor)
+        arena.count = self.count
         arena.DoPlayAMatch()
         return arena.GetResult()
 
@@ -74,7 +77,7 @@ class AutoPlayerArenaPool:
 
         end_time = time.time()
 
-        #print("Black Win:", self.blackWin, "White Win:", self.whiteWin, "Draw:", self.draw)
-        #print(f"\n🎉 所有任务计算完成！ ⏳总耗时：{end_time - start_time:.2f} 秒")
+        print("Black Win:", self.blackWin, "White Win:", self.whiteWin, "Draw:", self.draw)
+        print(f"\n🎉 所有任务计算完成！ ⏳总耗时：{end_time - start_time:.2f} 秒")
 
         return self.blackWin,self.whiteWin,self.draw

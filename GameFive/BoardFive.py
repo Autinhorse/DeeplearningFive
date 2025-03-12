@@ -1,9 +1,8 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QColor, QPen
 from PyQt5.QtCore import Qt, QPoint
 
-from Players.PlayerBase import PlayerColor
+from GameFive.RobotFive.RobotFiveBase import PlayerColor
 
 
 class BoardFive(QWidget):
@@ -73,7 +72,7 @@ class BoardFive(QWidget):
                 if self.game.board[y][x] != PlayerColor.EMPTY:
                     return
                 print("Click:",y,x)
-                self.nextMove = (x, y)
+                self.nextMove = (y, x)
 
                 #self.game.board[y][x] = self.current_player
                 #self.game.DoMove(y=y, x=x, playerColor=self.current_player)

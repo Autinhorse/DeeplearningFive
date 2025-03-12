@@ -1,21 +1,21 @@
 import copy
 
-from GameFive import GameFive
-from Players.AutoPlayerArenaPool import AutoPlayerArenaPool
-from Players.PlayerBase import RobotBase, PlayerColor, RobotType
-import random
+from GameFive.GameFive import GameFive
+from RobotArena.AutoRobotArenaPool import AutoRobotArenaPool
+from GameFive.RobotFive.RobotFiveBase import RobotFiveBase, PlayerColor
 import multiprocessing
 import time
 
-from Players.PlayerRandom03 import RobotRandom03
+from GameFive.RobotFive.RobotFiveRandom03 import RobotFiveRandom03
+from RobotArena.RobotFactory import RobotType
 
 
-class RobotMCTS(RobotBase):
+class RobotFiveMCTS(RobotFiveBase):
     def __init__(self, color):
         super().__init__(color)
         self.distance = 1   # 下一步必须下在距离已经有的棋子多远的位置
         self.tryNumber = 200
-        self.type = RobotType.MCTS
+        self.type = RobotType.FiveMCTS
 
         self.done_event = multiprocessing.Event()
 
@@ -60,17 +60,17 @@ class RobotMCTS(RobotBase):
         start_time = time.time()
 
         bestX, bestY, bestRate = -1, -1, 0
-        player1 = RobotRandom03(PlayerColor.BLACK)
-        player2 = RobotRandom03(PlayerColor.WHITE)
+        player1 = RobotFiveRandom03(PlayerColor.BLACK)
+        player2 = RobotFiveRandom03(PlayerColor.WHITE)
 
         # 这里创建一个游戏的目的实际就是利用DoMova函数判断一下是不是这步就赢了
-        game = GameFive(15)
+        game = GameFive()
 
-        for (x, y), dis in pos:
+        for (y, x), dis in pos:
             if playerColor == PlayerColor.BLACK and not game.isFreeMode:
                 # 非业余模式，执黑，需要判断禁手
                 board[y][x] = PlayerColor.BLACK  # 先在这个位置放上黑子
-                isForbidden = RobotMCTS.IsBlackForbiddenStatic(board, y=y, x=x)
+                isForbidden = RobotFiveMCTS.IsBlackForbiddenStatic(board, y=y, x=x)
                 board[y][x] = PlayerColor.EMPTY
                 if isForbidden:
                     # 黑棋的禁手，跳过
@@ -85,8 +85,8 @@ class RobotMCTS(RobotBase):
                 break
 
             # 调用线程池模拟继续下
-            pool = AutoPlayerArenaPool(player1=player1, player2=player2, board=board, beginColor=playerColor,
-                                       processNumber=10, taskNumber=tryNumber)
+            pool = AutoRobotArenaPool(player1=player1, player2=player2, board=board, beginColor=playerColor,
+                                      processNumber=10, taskNumber=tryNumber)
             bw, ww, draw = pool.DoMatch()
             rate = bw / ww if playerColor == PlayerColor.BLACK else ww / bw
             #print("Pos:",y,x,"Rate:",rate)
@@ -105,7 +105,7 @@ class RobotMCTS(RobotBase):
         #print(f"Worker process finished and set the event   ⏳总耗时：{end_time - start_time:.2f} 秒")
 
     @staticmethod
-    def IsBlackForbiddenStatic(board,x,y):
+    def IsBlackForbiddenStatic(board,y,x):
 
         def GetPieceOnCalBoardPos(y,x):
             if y < 0 or y >= size or x < 0 or x >= size:
