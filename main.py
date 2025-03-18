@@ -3,6 +3,7 @@ import sys
 
 from GameCheckers.Checkers import Checkers
 from GameFive.Five import Five
+from ReinforceLearning.TrainData import TrainData
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -15,5 +16,7 @@ sys.excepthook = handle_exception
 
 if __name__ == '__main__':
     # game = Five()
-    game = Checkers()
-    game.StartGame()
+    # game = Checkers()
+    # game.StartGame()
+    trainer = TrainData()
+    trainer.Train()

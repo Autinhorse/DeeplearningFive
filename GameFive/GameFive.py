@@ -112,13 +112,13 @@ class GameFive:
             'size': self.size,
             'board': self.board
         }
-        with open('../gamedata.json', 'w', encoding='utf-8') as file:
+        with open('../TrainData/gamedata.json', 'w', encoding='utf-8') as file:
             json.dump(data, file, ensure_ascii=False, indent=4)
 
     def LoadGame(self):
         print("Load Game")
         try:
-            with open('../gamedata.json', 'r', encoding='utf-8') as file:
+            with open('../TrainData/gamedata.json', 'r', encoding='utf-8') as file:
                 data = json.load(file)
 
             self.size = data['size']
