@@ -19,4 +19,5 @@ if __name__ == '__main__':
     # game = Checkers()
     # game.StartGame()
     trainer = TrainData()
-    trainer.Train()
+    # trainer.SaveTrainData()
+    trainer.Train(file="data10")

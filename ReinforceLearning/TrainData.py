@@ -1,6 +1,8 @@
 import numpy as np
 import pickle
 
+from keras import Sequential
+from keras.layers import Conv2D, Flatten, Dense, MaxPooling2D, Dropout
 from tensorflow_estimator.python.estimator.estimator import maybe_overwrite_model_dir_and_session_config
 
 from GameCheckers.RobotCheckers.RobotCheckersBase import PieceType
@@ -57,9 +59,9 @@ class GameCheckersTraining(object):
         return board_matrix
 
     def EncodeMove(self, moves):
-        move = np.zeros((8, 8))
-        move[int(moves[0]), int(moves[1])] = -1
-        move[int(moves[-2]), int(moves[-1])] = 1
+        move = np.zeros((8*8))
+        move[int(moves[0])*8+int(moves[1])] = -1
+        move[int(moves[-2])*8+int(moves[-1])] = 1
 
         return move
 
@@ -77,7 +79,7 @@ class TrainData:
         with open('data10.pkl', 'rb') as f:
             self.records = pickle.load(f)
 
-    def Train(self):
+    def SaveTrainData(self):
         self.LoadData()
 
         print("Records Loaded:",len(self.records))
@@ -95,3 +97,40 @@ class TrainData:
 
         np.save("TrainData\data10-boards.npy", x)
         np.save("TrainData\data10-moves.npy", y)
+
+    def Train(self, file):
+
+        X = np.load("TrainData\\"+file+"-boards.npy")
+        Y = np.load("TrainData\\"+file+"-moves.npy")
+
+        samples = X.shape[0]
+        size = 8
+        input_shape = (size, size, 1)
+        X = X.reshape((samples, size, size, 1))
+        train_samples = int(0.9*samples)
+
+        X_train, X_test = X[:train_samples], X[train_samples:]
+        Y_train, Y_test = Y[:train_samples], Y[train_samples:]
+
+        model = Sequential()
+        model.add(Conv2D(filters=48, kernel_size=(3, 3), activation='relu', padding='same',input_shape=input_shape))
+        model.add(Dropout(0.5))
+        model.add(Conv2D(48,(3,3), padding='same', activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.5))
+        model.add(Flatten())
+        model.add(Dense(512, activation='sigmoid'))
+        model.add(Dropout(0.5))
+        model.add(Dense(size*size, activation='softmax'))
+        model.summary()
+
+        model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
+
+        model.fit(X_train, Y_train, batch_size=64, epochs=100, verbose=1, validation_data=(X_test, Y_test))
+        score = model.evaluate(X_test, Y_test, verbose=0)
+        print("Test loss:", score[0])
+        print("Test accuracy:", score[1])
+
+
+
+
